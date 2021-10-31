@@ -1,7 +1,9 @@
 import pywt
 import numpy as np
 import matplotlib.pyplot as plt
+import neurokit2 as nk
 from scipy import signal, fftpack
+from ecgdetectors import Detectors
 
 
 # Download signal to from old to new sampling rate
@@ -68,7 +70,7 @@ def apply_wavelet_reconstruction_denoising(x):
     return pywt.waverec(coeffs, wavelet)
 
 
-def apply_butter_low_pass(x, fs=1000, cutoff=50, order=2):
+def apply_butter_low_pass(x, fs=1000, cutoff=100, order=2):
     nyq = 0.5 * fs
     normal_cutoff = cutoff / nyq
     b, a = signal.butter(order, normal_cutoff, btype='low', analog=False)
