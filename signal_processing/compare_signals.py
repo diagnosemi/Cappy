@@ -63,3 +63,4 @@ for p in df.columns:
     summary_df.loc[p, 'Total Power (mV)'] = total_power
     summary_df.loc[p, 'Max PSD (mV^2/Hz)'] = max_psd
     summary_df.loc[p, 'Frequency of Max PSD (Hz)'] = freq_of_max_psd
+
