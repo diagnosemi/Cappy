@@ -39,8 +39,8 @@ def remove_sinusoid_noise(x, noise_freq=60, fs=1000, Q=30):
 
 
 # Uses a notch filter to remove baseline wander
-def remove_baseline_wander(x, fs=20500, cutoff=0.05):
-    b, a = signal.iirnotch(cutoff, Q=0.005, fs=fs)
+def remove_baseline_wander(x, Q=0.005, fs=20500, cutoff=0.05):
+    b, a = signal.iirnotch(cutoff, Q=Q, fs=fs)
     filtered_data = signal.filtfilt(b, a, x)
     return filtered_data
 
