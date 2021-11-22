@@ -1,13 +1,11 @@
 import pywt
 import numpy as np
 import matplotlib.pyplot as plt
-import neurokit2 as nk
 from scipy import signal, fftpack
-from ecgdetectors import Detectors
 
 
 # Download signal to from old to new sampling rate
-def downsample_signal(x, old_fs=20500, new_fs=1000):
+def downsample_signal(x, old_fs=20500, new_fs=460):
     secs = round(len(x)/old_fs)
     samps = secs * new_fs
     return signal.resample(x, samps)
@@ -27,19 +25,8 @@ def process_hardware_ecg(x):
     return x
 
 
-# NOT USED ANYMORE
-# Remove sinusoid noise at specified frequency with notch filter
-def remove_sinusoid_noise(x, noise_freq=60, fs=1000, Q=30):
-    fs = fs
-    f0 = noise_freq
-    Q = Q
-    b, a = signal.iirnotch(f0, Q, fs)
-    output_signal = signal.filtfilt(b, a, x)
-    return output_signal
-
-
 # Uses a notch filter to remove baseline wander
-def remove_baseline_wander(x, Q=0.005, fs=20500, cutoff=0.05):
+def remove_baseline_wander(x, Q=0.005, fs=20500, cutoff=0.5):
     b, a = signal.iirnotch(cutoff, Q=Q, fs=fs)
     filtered_data = signal.filtfilt(b, a, x)
     return filtered_data
@@ -70,7 +57,7 @@ def apply_wavelet_reconstruction_denoising(x):
     return pywt.waverec(coeffs, wavelet)
 
 
-def apply_butter_low_pass(x, fs=1000, cutoff=100, order=2):
+def apply_butter_low_pass(x, fs=460, cutoff=50, order=2):
     nyq = 0.5 * fs
     normal_cutoff = cutoff / nyq
     b, a = signal.butter(order, normal_cutoff, btype='low', analog=False)
@@ -83,7 +70,7 @@ def remove_mean(x):
 
 
 # Plot signal frequency spectrum
-def plot_freq_spectrum(x, fs=1000):
+def plot_freq_spectrum(x, fs=460):
     plt.figure(figsize=(20, 12))
     yf = fftpack.fft(x)
     xf = fftpack.fftfreq(len(x)) * fs
@@ -93,10 +80,10 @@ def plot_freq_spectrum(x, fs=1000):
 
 
 # Get a matplotlib object of an ECG plot
-def plot_ecg(signal, label, colour='b-', cutoff=None):
+def plot_ecg(signal, label, fs=460, colour='b-', cutoff=None):
     # Convert x axis from # samples to time
     x_axis_samples = np.arange(start=0, stop=len(signal), step=1)
-    x_axis_time = x_axis_samples / 1000
+    x_axis_time = x_axis_samples / fs
 
     plt.figure(figsize=(20, 12))
 
@@ -109,4 +96,3 @@ def plot_ecg(signal, label, colour='b-', cutoff=None):
     plt.xlabel('Time (s)')
     plt.legend(loc="upper left")
     plt.show()
-

@@ -1,7 +1,7 @@
 import pickle
 import pandas as pd
 from custom_processing import process_hardware_ecg, apply_wavelet_reconstruction_denoising, apply_butter_low_pass,\
-    remove_baseline_wander, remove_mean
+    remove_baseline_wander, remove_mean, downsample_signal
 from feature_extraction import compute_snr, compute_mean_ptp, compute_qrs_ratio, compute_power, compute_max_psd_freq
 
 # Load PTB data
@@ -15,15 +15,19 @@ our_data = ['simona', 'cesar']
 df = pd.DataFrame(columns=healthy_controls+our_data)
 
 # Extract data for 5 healthy controls: patient155, patient263, patient264, patient170, patient182 and save to df
+# For each patient just take 115 seconds (that is max amount of time common for all signals)
 for hc in healthy_controls:
     patient = raw_ptb_data[hc]
     recording = list(patient.keys())[0]
     signal = patient[recording]['i']
-    df[hc] = signal
+    # Downsample to 460Hz from 1kHz
+    signal = downsample_signal(signal, old_fs=1000)
+    # Only preserve 115 seconds ~= 52900
+    df[hc] = signal[:52900]
 
-# Add our own raw data to df: downsample and take middle 115.2 secs to match length of PTB data
-lower_bound = 60 * 1000
-upper_bound = int((60+115.2) * 1000)
+# Add our own raw data to df: downsample and take middle 115 secs to match length of PTB data
+lower_bound = 60 * 460
+upper_bound = int((60+115) * 460)
 simona_sitting =\
     process_hardware_ecg(pd.read_csv('../ecg_acquisition/raw_ecgs/simona_sitting.csv'))[lower_bound:upper_bound]
 df['simona'] = simona_sitting
@@ -34,8 +38,8 @@ df['cesar'] = cesar_sitting
 # Perform signal processing on all signals in df
 # Apply denoising filters on signal: use lower cutoff freq for our raw data because it's noisier
 df = df.apply(lambda x: apply_wavelet_reconstruction_denoising(x), axis=0)
-df[healthy_controls] = df[healthy_controls].apply(lambda x: apply_butter_low_pass(x), axis=0)
-df[our_data] = df[our_data].apply(lambda x: apply_butter_low_pass(x, cutoff=50), axis=0)
+df[healthy_controls] = df[healthy_controls].apply(lambda x: apply_butter_low_pass(x, cutoff=75), axis=0)
+df[our_data] = df[our_data].apply(lambda x: apply_butter_low_pass(x), axis=0)
 
 # Remove baseline wander
 df = df.apply(lambda x: remove_baseline_wander(x), axis=0)
@@ -63,4 +67,3 @@ for p in df.columns:
     summary_df.loc[p, 'Total Power (mV)'] = total_power
     summary_df.loc[p, 'Max PSD (mV^2/Hz)'] = max_psd
     summary_df.loc[p, 'Frequency of Max PSD (Hz)'] = freq_of_max_psd
-

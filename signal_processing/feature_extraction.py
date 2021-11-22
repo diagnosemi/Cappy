@@ -5,13 +5,15 @@ from scipy import signal
 
 
 # Use pan tompkins algorithm to separate signal into n beats
-def apply_pan_tompkins(x, n_beats=110, fs=1000):
+def apply_pan_tompkins(x, n_beats=110, fs=460):
     _, rpeaks = nk.ecg_peaks(x, sampling_rate=fs)
 
-    # Select 250 left of R and 500 right of R as one beat
+    # Select 0.25 seconds left of peak and 0.5 seconds right of beat
     cleaned_signal_dict = {}
     for peak in rpeaks['ECG_R_Peaks']:
-        cleaned_signal_dict.update({peak: x[peak - 250:peak + 500]})
+        left_index = int(0.25*fs)
+        right_index = int(0.5*fs)
+        cleaned_signal_dict.update({peak: x[peak - left_index:peak + right_index]})
 
     # If n_beats is defined, returned those beats
     if n_beats:
@@ -27,7 +29,7 @@ def apply_pan_tompkins(x, n_beats=110, fs=1000):
 
 
 # Compute signal to noise ratio on each beat and return average in mV or dB
-def compute_snr(x, in_db=True):
+def compute_snr(x, fs=460, in_db=True):
     # Get R peaks 
     peaks = apply_pan_tompkins(x, n_beats=None)
     
@@ -41,8 +43,9 @@ def compute_snr(x, in_db=True):
         vpp_signal = np.ptp(signal)
         vpp_signal_ecg.append(vpp_signal)
         
-        # Compute vpp noise using the last 150 samples of ecg beat
-        noise_interval = signal[-150:]
+        # Compute vpp noise using the last 0.15 seconds of ecg beat
+        samples = int(fs*0.15)
+        noise_interval = signal[-samples:]
         vpp_noise = np.ptp(noise_interval)
         vpp_noise_ecg.append(vpp_noise)
     
@@ -69,7 +72,7 @@ def compute_mean_ptp(x):
 
 
 # Compute mean qrs to signal width ratio
-def compute_qrs_ratio(x, fs=1000):
+def compute_qrs_ratio(x, fs=460):
     # Find Q and S peaks
     _, rpeaks = nk.ecg_peaks(x, sampling_rate=fs)
     _, waves_peak = nk.ecg_delineate(x, rpeaks, sampling_rate=fs, method="peak")
@@ -79,8 +82,9 @@ def compute_qrs_ratio(x, fs=1000):
     S_waves = waves_peak['ECG_S_Peaks']
     diff = [s - q for s, q in zip(S_waves, Q_waves)]
     
-    # Divide the diff by 750 (length of 1 beat in samples)
-    ratio = [i/750 for i in diff if not np.isnan(i)]
+    # Divide the diff by 0.75 seconds (length of 1 beat in samples)
+    duration_samples = int(0.75*fs)
+    ratio = [i/duration_samples for i in diff if not np.isnan(i)]
     return sum(ratio)/len(ratio)
 
 
@@ -90,8 +94,7 @@ def compute_power(x):
 
 
 # Compute frequency with max power
-def compute_max_psd_freq(x):
-    fs = 1000
+def compute_max_psd_freq(x, fs=460):
     f, pxx_den = signal.periodogram(x, fs)
     f = f.tolist()
     pxx_den = pxx_den.tolist()
