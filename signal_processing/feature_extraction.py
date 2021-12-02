@@ -5,14 +5,14 @@ from scipy import signal
 
 
 # Use pan tompkins algorithm to separate signal into n beats
-def apply_pan_tompkins(x, n_beats=110, fs=460):
+def apply_pan_tompkins(x, n_beats=110, fs=460, left_data=0.25, right_data=0.5):
     _, rpeaks = nk.ecg_peaks(x, sampling_rate=fs)
 
     # Select 0.25 seconds left of peak and 0.5 seconds right of beat
     cleaned_signal_dict = {}
     for peak in rpeaks['ECG_R_Peaks']:
-        left_index = int(0.25*fs)
-        right_index = int(0.5*fs)
+        left_index = int(left_data*fs)
+        right_index = int(right_data*fs)
         cleaned_signal_dict.update({peak: x[peak - left_index:peak + right_index]})
 
     # If n_beats is defined, returned those beats
@@ -72,7 +72,7 @@ def compute_mean_ptp(x):
 
 
 # Compute mean qrs to signal width ratio
-def compute_qrs_ratio(x, fs=460):
+def compute_qrs_ratio(x, fs=460, length_of_beat=0.75):
     # Find Q and S peaks
     _, rpeaks = nk.ecg_peaks(x, sampling_rate=fs)
     _, waves_peak = nk.ecg_delineate(x, rpeaks, sampling_rate=fs, method="peak")
@@ -83,7 +83,7 @@ def compute_qrs_ratio(x, fs=460):
     diff = [s - q for s, q in zip(S_waves, Q_waves)]
     
     # Divide the diff by 0.75 seconds (length of 1 beat in samples)
-    duration_samples = int(0.75*fs)
+    duration_samples = int(length_of_beat*fs)
     ratio = [i/duration_samples for i in diff if not np.isnan(i)]
     return sum(ratio)/len(ratio)
 
