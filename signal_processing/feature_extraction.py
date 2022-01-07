@@ -102,4 +102,3 @@ def compute_max_psd_freq(x, fs=460):
     index_max_power = pxx_den.index(max_power)
     freq_max_power = f[index_max_power]
     return max_power, freq_max_power
-

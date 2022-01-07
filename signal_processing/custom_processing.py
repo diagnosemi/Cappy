@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy import signal, fftpack
 
 
-# Download signal to from old to new sampling rate
+# Downsample signal from old to new sampling rate
 def downsample_signal(x, old_fs=20500, new_fs=460):
     secs = round(len(x)/old_fs)
     samps = secs * new_fs
@@ -12,7 +12,7 @@ def downsample_signal(x, old_fs=20500, new_fs=460):
 
 
 # Process raw ecg signal acquired by our hardware
-def process_hardware_ecg(x):
+def process_hardware_ecg(x, old_fs=20500):
     # Convert from string to float
     x = x[x['raw_ecg'] != "b''"]
     x['raw_ecg'] = x['raw_ecg'].apply(lambda x: float(x[:-1][2:]))
@@ -21,7 +21,7 @@ def process_hardware_ecg(x):
     x = (x['raw_ecg'] / 1024. / 1.1 * 3.3 - 1.5).tolist()
 
     # Downsample
-    x = downsample_signal(x)
+    x = downsample_signal(x, old_fs=old_fs)
     return x
 
 
@@ -37,6 +37,7 @@ def madev(d, axis=None):
     return np.mean(np.absolute(d - np.mean(d, axis)), axis)
 
 
+# Apply DWT with sym4 wavelets
 def apply_wavelet_reconstruction_denoising(x):
     wavelet = 'sym4'
     w = pywt.Wavelet(wavelet)
@@ -57,6 +58,7 @@ def apply_wavelet_reconstruction_denoising(x):
     return pywt.waverec(coeffs, wavelet)
 
 
+# Apply butterworth LPF with cutoff 50Hz
 def apply_butter_low_pass(x, fs=460, cutoff=50, order=2):
     nyq = 0.5 * fs
     normal_cutoff = cutoff / nyq
@@ -65,6 +67,7 @@ def apply_butter_low_pass(x, fs=460, cutoff=50, order=2):
     return filtered_data
 
 
+# Remove mean
 def remove_mean(x):
     return x - x.mean()
 
@@ -96,3 +99,28 @@ def plot_ecg(signal, label, fs=460, colour='b-', cutoff=None):
     plt.xlabel('Time (s)')
     plt.legend(loc="upper left")
     plt.show()
+
+
+# Clean one ECG signal: downsample, remove noise and baseline wander
+def clean_ecg_signal(x, old_fs, new_fs=460, lpf_cutoff=50, is_ptb_data=True):
+    # If it is a PTB signal, downsample immediately
+    if is_ptb_data:
+        # Downsample signal
+        x = downsample_signal(x, old_fs=old_fs, new_fs=new_fs)
+        
+    # If it is our raw ECG data, convert to mV then downsample
+    else:
+        x = process_hardware_ecg(x, old_fs=old_fs)
+    
+    # Apply DWT
+    x = apply_wavelet_reconstruction_denoising(x)
+    
+    # Apply LPF
+    x = apply_butter_low_pass(x, fs=new_fs, cutoff=lpf_cutoff)
+    
+    # Remove baseline wander
+    x = remove_baseline_wander(x)
+    
+    # Remove mean
+    x = remove_mean(x)
+    return x
