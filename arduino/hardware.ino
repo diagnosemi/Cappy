@@ -42,8 +42,6 @@ int GyroZ = 0;
 
 /* BATTERY SERVICE ITEMS
  * ----------------- */
-int BatteryLevel = 100;
-
 /*  This sets up the battery service for us. 
  *  You could also set it up using the UUID 
  *  like I do acceleromter service. Check out the 
@@ -127,16 +125,16 @@ void emittAccelerometerData(int xAcc, int yAcc, int zAcc, int xGyro, int yGyro, 
   updateIntCharacteristic("accelerometer time", counter, int(accTimeReference), accTimeCharId);
 }
 
-
 void setup() {
-  // SETUP BLE
   #define VBATPIN A7
   
   // initialize the serial communication:
+  Serial.begin(9600);
   pinMode(10, INPUT); // Setup for leads off detection LO +
   pinMode(11, INPUT); // Setup for leads off detection LO -
+  pinMode(5, OUTPUT); // Green power LED
+  pinMode(6, OUTPUT); // // Red battery LED
 
-  delay(500);
   boolean success;
   Serial.begin(115200);
   if ( !ble.begin(false) ) error(F("Couldn't find Bluefruit, make sure it's in CoMmanD mode & check wiring?")); // Set to false for silent and true for debug
@@ -157,10 +155,39 @@ void setup() {
   Serial.println();
 }
 
-
 void loop() {
-  // Update the battery level measurement
-  battery.update(BatteryLevel);
+  // Measure battery voltage
+  float measuredvbat = analogRead(VBATPIN);
+  measuredvbat *= 2;    // we divided by 2, so multiply back
+  measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
+  measuredvbat /= 1024; // convert to voltage
+  Serial.print("VBat: " ); Serial.println(measuredvbat);
+
+  // If battery voltage is above zero, set green LED to high
+  if(measuredvbat >= 0) {
+    digitalWrite(5, HIGH);
+  }
+  
+  if((measuredvbat >= 0) && (measuredvbat <= 3.7)){
+    digitalWrite(6, HIGH);
+    delay(300);
+    digitalWrite(6, LOW);
+    delay(300);
+    digitalWrite(6, HIGH);
+    delay(300);
+    digitalWrite(6, LOW);
+    delay(300);
+    digitalWrite(6, HIGH);
+    delay(300);
+    digitalWrite(6, LOW);
+    delay(300);
+    digitalWrite(6, HIGH);
+    delay(1500);
+  }
+
+// Update the battery level measurement
+
+  battery.update(measuredvbat);
 
   StartTime = millis();
   TimeReference = millis();
@@ -169,18 +196,14 @@ void loop() {
   // Imaginary BIS Sweep here...
   for (int i = 0; i < 5; i++) {
     TimeReference = millis();
-
+  
     AccX = 20;
     AccY = random(1, 100);
     AccZ = random(1, 100);
     GyroX = random(1, 100);
     GyroY = random(1, 100);
     GyroZ = random(1, 100);
-    float measuredvbat = analogRead(VBATPIN);
-    measuredvbat *= 2;    // we divided by 2, so multiply back
-    measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
-    measuredvbat /= 1024; // convert to voltage
-    Serial.print("VBat: " ); Serial.println(measuredvbat);
+    
     if((digitalRead(10) == 1)||(digitalRead(11) == 1)){
       Serial.println('!');
     }
@@ -192,11 +215,5 @@ void loop() {
     
     count++;
     Serial.println(count);
-  }
-  
-  // Imaginary battery drain...
-  
-  if (BatteryLevel == 0) {
-    BatteryLevel = 100;
   }
 }
