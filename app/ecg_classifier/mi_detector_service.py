@@ -3,7 +3,7 @@ from .utils import downsample_signal, process_hardware_ecg, \
 
 
 # Clean one ECG signal: downsample, remove noise and baseline wander
-def apply_preprocessing_1(x, old_fs, new_fs=460, lpf_cutoff=50, is_ptb_data=True):
+def apply_preprocessing(x, old_fs, new_fs=460, lpf_cutoff=50, is_ptb_data=True):
     # If it is a PTB signal, downsample immediately
     if is_ptb_data:
         # Downsample signal
