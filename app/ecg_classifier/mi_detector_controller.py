@@ -28,6 +28,7 @@ class Records(Resource):
         ecg_signal = data.get('ecg_signal')
         #ecg_signal = apply_preprocessing(ecg_signal, old_fs=460)
 
+
         # Run model
         result = classify_ecg(ecg_signal)
         return jsonify(result)
