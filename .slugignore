@@ -2,4 +2,3 @@
 /ecg_acquisition
 /ptb_data_handler
 /signal_processing
-/app/ml_model
