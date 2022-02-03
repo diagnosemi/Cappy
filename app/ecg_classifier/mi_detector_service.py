@@ -1,4 +1,4 @@
-#import tensorflow as tf
+import tensorflow as tf
 from .utils import downsample_signal, process_hardware_ecg, \
     apply_wavelet_reconstruction_denoising, apply_butter_low_pass, remove_baseline_wander
 
@@ -29,6 +29,6 @@ def apply_preprocessing(x, old_fs, new_fs=460, lpf_cutoff=50, is_ptb_data=True):
 
 
 def classify_ecg(x):
-    # model = tf.keras.models.load_model('../ml_model')
-    # result = model.predict(x)
-    return x
+    model = tf.keras.models.load_model('../ml_model')
+    result = model.predict(x)
+    return result
