@@ -29,6 +29,6 @@ def apply_preprocessing(x, old_fs, new_fs=460, lpf_cutoff=50, is_ptb_data=True):
 
 
 def classify_ecg(x):
-    model = tf.keras.models.load_model('../ml_model')
+    model = tf.keras.models.load_model('app/ml_model')
     result = model.predict(x)
     return result
