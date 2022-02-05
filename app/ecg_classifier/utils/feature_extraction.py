@@ -19,10 +19,17 @@ def apply_pan_tompkins(x, n_beats=10, beat_length=512, fs=460, standardize=False
     peaks = rpeaks['ECG_R_Peaks']
 
     # Loop through all the peaks
-    for i in range(len(peaks) - 1):
-        # Get current and next peak
+    for i in range(len(peaks)):
+        # Get current peak
         current_peak = rpeaks['ECG_R_Peaks'][i]
-        next_peak = rpeaks['ECG_R_Peaks'][i + 1]
+
+        # If current peak is the last peak, set the last peak to be last sample of signal
+        if i == len(peaks) - 1:
+            next_peak = len(x) - 1
+        # Otherwise next peak is next peak in the peaks list
+        else:
+            # Get current and next peak
+            next_peak = rpeaks['ECG_R_Peaks'][i + 1]
 
         # Check if distance to next peak is less than the required beat length
         if (next_peak - current_peak) < beat_length:
