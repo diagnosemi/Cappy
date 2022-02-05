@@ -42,13 +42,14 @@ def prep_model_input(ecg):
     df = pd.DataFrame(np.reshape(ecg_beats, [8, 512]))
     df = df.sample(frac=1).reset_index(drop=True)
     ecg_beats = df.to_numpy()
-    ecg_beats = np.reshape(ecg_beats, [8, 512, 1])
+    ecg_beats = np.reshape(ecg_beats, [1, 8, 512, 1])
     return ecg_beats
 
 
 def classify_ecg_cnn_lstm(ecg):
     # Select only 8 beats from signal
     model_data = prep_model_input(ecg)
+    print(model_data.shape)
 
     # Load model and run prediction algo on ecg
     model = tf.keras.models.load_model('app/ml_model')
