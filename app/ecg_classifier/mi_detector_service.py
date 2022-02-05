@@ -53,13 +53,18 @@ def classify_ecg_cnn_lstm(ecg):
     # Load model and run prediction algo on ecg
     model = tf.keras.models.load_model('app/ml_model')
     result = model.predict(model_data)
-    print(result)
 
     # Format the result
     mi_risk = result[0][0]
     other_cvd_risk = result[0][1]
     healthy_risk = result[0][2]
+    print(result, type(result))
+    print(mi_risk, type(mi_risk))
+    print(other_cvd_risk, type(other_cvd_risk))
+    print(healthy_risk, type(healthy_risk))
     response = {'mi_risk': mi_risk,
                 'other_cvd_risk': other_cvd_risk,
                 'healthy_risk': healthy_risk}
+    print(response)
+    print(type(response))
     return response
