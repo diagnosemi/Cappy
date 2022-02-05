@@ -3,7 +3,7 @@ from flask import jsonify, make_response, request
 from marshmallow import ValidationError
 
 from .mi_detector_schema import EcgClassifierSchema
-from .mi_detector_service import apply_preprocessing, classify_ecg
+from .mi_detector_service import apply_preprocessing, classify_ecg_cnn_lstm
 
 ecg_classifier_ns = Namespace('ecg_classifier', description='Detects MI in ECG.')
 
@@ -26,7 +26,8 @@ class Records(Resource):
 
         # Extract ecg signal and perform pre processing
         ecg_signal = data.get('ecg_signal')
-        #ecg_signal = apply_preprocessing(ecg_signal, old_fs=460)
+        ecg_signal = apply_preprocessing(ecg_signal, old_fs=500, is_ptb_data=True)
+
         # Run model
-        result = classify_ecg(ecg_signal)
+        result = classify_ecg_cnn_lstm(ecg_signal)
         return jsonify(result)
