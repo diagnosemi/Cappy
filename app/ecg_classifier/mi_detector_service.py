@@ -49,16 +49,16 @@ def prep_model_input(ecg):
 def classify_ecg_cnn_lstm(ecg):
     # Select only 8 beats from signal
     model_data = prep_model_input(ecg)
-    print(model_data.shape)
 
     # Load model and run prediction algo on ecg
     model = tf.keras.models.load_model('app/ml_model')
     result = model.predict(model_data)
+    print(result)
 
     # Format the result
-    mi_risk = result[0]
-    other_cvd_risk = result[1]
-    healthy_risk = result[2]
+    mi_risk = result[0][0]
+    other_cvd_risk = result[0][1]
+    healthy_risk = result[0][2]
     response = {'mi_risk': mi_risk,
                 'other_cvd_risk': other_cvd_risk,
                 'healthy_risk': healthy_risk}
