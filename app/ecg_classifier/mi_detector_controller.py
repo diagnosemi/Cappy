@@ -30,5 +30,6 @@ class Records(Resource):
 
         # Run model
         result = classify_ecg_cnn_lstm(ecg_signal)
-        print(jsonify(result))
-        return jsonify('hi')
+        print('result here')
+        print(result)
+        return jsonify(result)
