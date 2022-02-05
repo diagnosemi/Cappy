@@ -57,9 +57,11 @@ def classify_ecg_cnn_lstm(ecg):
 
     # Format the result
     mi_risk = result[0][0]
+    print(mi_risk, type(mi_risk))
     other_cvd_risk = result[0][1]
+    print(other_cvd_risk, type(other_cvd_risk))
     healthy_risk = result[0][2]
-    print(type(mi_risk), type(other_cvd_risk), type(healthy_risk))
+    print(healthy_risk, type(healthy_risk))
     response = {'mi_risk': mi_risk,
                 'other_cvd_risk': other_cvd_risk,
                 'healthy_risk': healthy_risk}
