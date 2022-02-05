@@ -32,4 +32,4 @@ class Records(Resource):
         result = classify_ecg_cnn_lstm(ecg_signal)
         print(result)
         print(type(result))
-        return jsonify(result)
+        return jsonify("hi")
