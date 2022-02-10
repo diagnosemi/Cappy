@@ -1,6 +1,14 @@
 import pywt
 import numpy as np
+import pandas as pd
 from scipy import signal
+
+
+# Fill null values in a list using linear interpolation
+def fill_nan(x):
+    x_series = pd.Series(x)
+    x_series = x_series.astype(float).interpolate()
+    return x_series.tolist()
 
 
 # Downsample signal from old to new sampling rate

@@ -1,13 +1,16 @@
 import tensorflow as tf
 import numpy as np
 import pandas as pd
-from .utils import downsample_signal, process_hardware_ecg, \
+from .utils import fill_nan, downsample_signal, process_hardware_ecg, \
     apply_wavelet_reconstruction_denoising, apply_butter_low_pass,\
     remove_baseline_wander, apply_pan_tompkins
 
 
 # Clean one ECG signal: downsample, remove noise and baseline wander
 def apply_preprocessing(x, old_fs, new_fs=460, lpf_cutoff=50, is_ptb_data=True):
+    # Fill null values with linear interpolation
+    x = fill_nan(x)
+
     # If it is a PTB signal, downsample immediately
     if is_ptb_data:
         # Downsample signal
