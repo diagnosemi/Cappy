@@ -19,19 +19,30 @@ def get_formatted_patient_data(patient_id, folder_path):
     patient_recording_data = {}
 
     # For each ecg recording, process record
+    ecg_count = 1
     for recording in ecg_records_list:
         recording_data = wfdb.rdrecord(patient_folder_path + "/" + recording)
         recording_data = recording_data.__dict__
 
         # Extract relevant clinical data from comments
         comments = recording_data["comments"]
+
+        # Skip ecg signal if it has no diagnostic class
+        skip = False
         for comment in comments:
             if "Reason for admission" in comment:
                 diagnosis = comment.split(":")[1].strip()
-            elif "Acute infarction (localization)" in comment:
-                acute_infarction_localization = comment.split(":")[1].strip()
-            elif "Former infarction (localization)" in comment:
-                former_infarction_localization = comment.split(":")[1].strip()
+                if diagnosis == 'n/a':
+                    skip = True
+                    break
+                elif diagnosis == 'Myocardial infarction':
+                    diagnostic_class = 'mi'
+                elif diagnosis == 'Healthy control':
+                    diagnostic_class = 'norm'
+                else:
+                    diagnostic_class = 'non_mi'
+        if skip:
+            continue
 
         # Extract signal data
         lead_names = recording_data['sig_name']
@@ -41,19 +52,19 @@ def get_formatted_patient_data(patient_id, folder_path):
         recording_df = pd.DataFrame(signals, columns=lead_names)
         recording_df['patient_id'] = patient_id
         recording_df['recording_id'] = recording
-        recording_df['label'] = diagnosis
-        recording_df['acute_infarction_localization'] = acute_infarction_localization
-        recording_df['former_infarction_localization'] = former_infarction_localization
+        recording_df['diagnostic_class'] = diagnostic_class
 
         # Replace "no" with None to standardize
         recording_df.replace({"no": None}, inplace=True)
 
         # Add df to patient recording data dict
-        patient_recording_data[recording] = recording_df
+        recording_key = patient_id + '_ecg_id_' + str(ecg_count)
+        patient_recording_data[recording_key] = recording_df
+        ecg_count += 1
     return patient_recording_data
 
 
-# Get nested dict: patient id --> recording id --> record df
+# Get nested dict: recording id --> record df
 def get_formatted_ptb_data():
     # Load folder path where PTB data is stored from environment variable
     ptb_folder_path = os.getenv('PTB_FOLDER_PATH')
@@ -64,9 +75,9 @@ def get_formatted_ptb_data():
         if 'patient' in file:
             patients.append(file)
 
-    # Loop through all patients and create a dict with patient id as key and one df per recording
+    # Loop through all patients and create a dict with record id as key and one df per recording
     total_patient_data = {}
     for patient in patients:
         patient_data = get_formatted_patient_data(patient, ptb_folder_path)
-        total_patient_data[patient] = patient_data
+        total_patient_data.update(patient_data)
     return total_patient_data
